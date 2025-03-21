@@ -52,39 +52,48 @@ function HomeScreen() {
     }
 
     setIsAnimating(true);
-    console.log('Начинаем генерацию с параметрами:', {
-      eventText,
-      selectedTags,
-      chatId
-    });
 
     try {
-      console.log('Отправляем запрос на сервер...');
-      const generateResponse = await fetch('https://19c4-86-104-74-151.ngrok-free.app', {
+      // Формируем сообщение для админа
+      const adminMessage = `
+🎯 Новый запрос на генерацию сценария!
+
+👤 Chat ID: ${chatId}
+
+📝 Описание события:
+${eventText}
+
+🎯 Выбранные цели:
+${selectedTags.join('\n')}
+      `;
+
+      // Отправляем уведомление админу
+      await fetch(`https://api.telegram.org/bot${process.env.REACT_APP_BOT_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          eventText: eventText,
-          selectedTags: selectedTags,
-          chatId: chatId.toString()
+          chat_id: process.env.REACT_APP_ADMIN_CHAT_ID,
+          text: adminMessage,
+          parse_mode: 'HTML'
         })
       });
 
-      console.log('Ответ сервера:', generateResponse);
-      
-      if (!generateResponse.ok) {
-        const errorData = await generateResponse.text();
-        console.error('Ошибка сервера:', errorData);
-        throw new Error(`Ошибка при генерации сценария: ${errorData}`);
-      }
-
-      const data = await generateResponse.json();
-      console.log('Полученные данные:', data);
-      
-      // 3. Отправляем сгенерированный сценарий пользователю через бота
+      // Отправляем сообщение пользователю
       if (chatId && chatId !== 'chat_id_not_found') {
+        const userMessage = `
+🎬 Ваш запрос принят!
+
+📝 Описание события:
+${eventText}
+
+🎯 Выбранные цели:
+${selectedTags.join('\n')}
+
+⏳ Сценарий будет готов в ближайшее время!
+        `;
+
         await fetch(`https://api.telegram.org/bot${process.env.REACT_APP_BOT_TOKEN}/sendMessage`, {
           method: 'POST',
           headers: {
@@ -92,14 +101,14 @@ function HomeScreen() {
           },
           body: JSON.stringify({
             chat_id: chatId,
-            text: `🎬 Ваш сценарий готов!\n\n${data.script}`,
+            text: userMessage,
             parse_mode: 'HTML'
           })
         });
       }
 
       setIsAnimating(false);
-      window.alert('🎬 Ваш сценарий появится в чате с минуты на минуту!');
+      window.alert('🎬 Ваш запрос принят! Проверьте сообщения в Telegram.');
       
       // Закрываем WebApp после успешной отправки
       if (window.Telegram) {
