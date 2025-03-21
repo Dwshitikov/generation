@@ -67,10 +67,6 @@ function HomeScreen() {
       window.alert('🎬 Ваш запрос отправлен! Проверьте сообщения в Telegram.');
       setIsAnimating(false);
       
-      // Закрываем WebApp после успешной отправки
-      if (window.Telegram) {
-        window.Telegram.WebApp.close();
-      }
     } catch (error) {
       setIsAnimating(false);
       console.error('Ошибка при отправке данных:', error);
