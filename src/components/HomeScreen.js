@@ -52,24 +52,63 @@ function HomeScreen() {
     }
 
     setIsAnimating(true);
+    console.log('Начинаем генерацию с параметрами:', {
+      eventText,
+      selectedTags,
+      chatId
+    });
 
     try {
-      // Формируем объект данных для отправки боту
-      const data = {
-        eventText,
-        selectedTags,
-        chatId,
-      };
+      console.log('Отправляем запрос на сервер...');
+      const generateResponse = await fetch('https://19c4-86-104-74-151.ngrok-free.app', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          eventText: eventText,
+          selectedTags: selectedTags,
+          chatId: chatId.toString()
+        })
+      });
 
-      // Отправляем данные напрямую боту через sendData
-      window.Telegram.WebApp.sendData(JSON.stringify(data));
-
-      window.alert('🎬 Ваш запрос отправлен! Проверьте сообщения в Telegram.');
-      setIsAnimating(false);
+      console.log('Ответ сервера:', generateResponse);
       
+      if (!generateResponse.ok) {
+        const errorData = await generateResponse.text();
+        console.error('Ошибка сервера:', errorData);
+        throw new Error(`Ошибка при генерации сценария: ${errorData}`);
+      }
+
+      const data = await generateResponse.json();
+      console.log('Полученные данные:', data);
+      
+      // 3. Отправляем сгенерированный сценарий пользователю через бота
+      if (chatId && chatId !== 'chat_id_not_found') {
+        await fetch(`https://api.telegram.org/bot${process.env.REACT_APP_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: `🎬 Ваш сценарий готов!\n\n${data.script}`,
+            parse_mode: 'HTML'
+          })
+        });
+      }
+
+      setIsAnimating(false);
+      window.alert('🎬 Ваш сценарий появится в чате с минуты на минуту!');
+      
+      // Закрываем WebApp после успешной отправки
+      if (window.Telegram) {
+        window.Telegram.WebApp.close();
+      }
+
     } catch (error) {
       setIsAnimating(false);
-      console.error('Ошибка при отправке данных:', error);
+      console.error('Подробности ошибки:', error);
       window.alert('Произошла ошибка. Пожалуйста, попробуйте позже.');
     }
   };
@@ -249,26 +288,28 @@ function HomeScreen() {
       
       const tg = window.Telegram.WebApp;
       
-      // Пробуем получить данные пользователя
+      // Пробуем получить из user
       const user = tg.initDataUnsafe?.user;
       if (user?.id) {
         setChatId(user.id);
         console.log('Chat ID из user:', user.id);
       } else {
-        // Используем тестовый chat_id для отладки
+        // Временно используем тестовый chat_id для отладки
         setChatId('6045806877');
         console.log('Используется тестовый Chat ID');
       }
       
+      // Пробуем получить из startParam
       const startParam = tg.initDataUnsafe?.start_param;
       if (startParam) {
         console.log('Start param:', startParam);
       }
       
+      // Если ничего не получилось, используем значение по умолчанию
       if (!chatId) {
         setChatId(tg.initDataUnsafe?.user?.id || tg.initDataUnsafe?.start_param || 'chat_id_not_found');
       }
-      
+
       console.log('WebApp data:', tg.initDataUnsafe);
     }
   }, []);
