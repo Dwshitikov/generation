@@ -54,65 +54,30 @@ function HomeScreen() {
     setIsAnimating(true);
 
     try {
-      // Формируем сообщение для админа
-      const adminMessage = `
-🎯 Новый запрос на генерацию сценария!
-
-👤 Chat ID: ${chatId}
-
-📝 Описание события:
-${eventText}
-
-🎯 Выбранные цели:
-${selectedTags.join('\n')}
-      `;
-
-      // Отправляем уведомление админу
-      await fetch(`https://api.telegram.org/bot${process.env.REACT_APP_BOT_TOKEN}/sendMessage`, {
+      // Делаем запрос на наш локальный Flask-сервер (или ваш ngrok URL)
+      const response = await fetch('http://127.0.0.1:8000/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          chat_id: process.env.REACT_APP_ADMIN_CHAT_ID,
-          text: adminMessage,
-          parse_mode: 'HTML'
+          chat_id: chatId,
+          eventText: eventText,
+          selectedTags: selectedTags
         })
       });
 
-      // Отправляем сообщение пользователю
-      if (chatId && chatId !== 'chat_id_not_found') {
-        const userMessage = `
-🎬 Ваш запрос принят!
-
-📝 Описание события:
-${eventText}
-
-🎯 Выбранные цели:
-${selectedTags.join('\n')}
-
-⏳ Сценарий будет готов в ближайшее время!
-        `;
-
-        await fetch(`https://api.telegram.org/bot${process.env.REACT_APP_BOT_TOKEN}/sendMessage`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: userMessage,
-            parse_mode: 'HTML'
-          })
-        });
-      }
-
+      const result = await response.json();
       setIsAnimating(false);
-      window.alert('🎬 Ваш запрос принят! Проверьте сообщения в Telegram.');
-      
-      // Закрываем WebApp после успешной отправки
-      if (window.Telegram) {
-        window.Telegram.WebApp.close();
+
+      if (response.ok && result.status === 'ok') {
+        // Сервер сгенерировал сценарий и выслал в Телеграм
+        window.alert('🎬 Ваш запрос принят! Проверьте сообщения в Telegram.');
+        
+        // Если вы в Telegram WebApp – можете закрыть окно
+        if (window.Telegram) {
+          window.Telegram.WebApp.close();
+        }
+      } else {
+        window.alert('Ошибка: ' + result.message);
       }
 
     } catch (error) {
@@ -292,6 +257,8 @@ ${selectedTags.join('\n')}
   };
 
   useEffect(() => {
+    // Если вы тестируете ЛОКАЛЬНО, вряд ли window.Telegram есть.
+    // Можно закомментировать или оставить:
     if (window.Telegram) {
       window.Telegram.WebApp.ready();
       
@@ -318,8 +285,11 @@ ${selectedTags.join('\n')}
       }
       
       console.log('WebApp data:', tg.initDataUnsafe);
+    } else {
+      // Если Telegram WebApp недоступен, используем тестовый
+      setChatId('6045806877'); 
     }
-  }, []);
+  }, [chatId]);
 
   return (
     <div className="safe-area">
