@@ -60,7 +60,7 @@ function HomeScreen() {
 
     try {
       console.log('Отправляем запрос на сервер...');
-      const generateResponse = await fetch('http://localhost:8000/generate_script', {
+      const generateResponse = await fetch('https://19c4-86-104-74-151.ngrok-free.app', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
