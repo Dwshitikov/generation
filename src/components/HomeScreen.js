@@ -54,70 +54,26 @@ function HomeScreen() {
     setIsAnimating(true);
 
     try {
-      // Формируем сообщение для админа
-      const adminMessage = `
-🎯 Новый запрос на генерацию сценария!
+      // Формируем объект данных для отправки боту
+      const data = {
+        eventText,
+        selectedTags,
+        chatId,
+      };
 
-👤 Chat ID: ${chatId}
+      // Отправляем данные напрямую боту через sendData
+      window.Telegram.WebApp.sendData(JSON.stringify(data));
 
-📝 Описание события:
-${eventText}
-
-🎯 Выбранные цели:
-${selectedTags.join('\n')}
-      `;
-
-      // Отправляем уведомление админу
-      await fetch(`https://api.telegram.org/bot${process.env.REACT_APP_BOT_TOKEN}/sendMessage`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          chat_id: process.env.REACT_APP_ADMIN_CHAT_ID,
-          text: adminMessage,
-          parse_mode: 'HTML'
-        })
-      });
-
-      // Отправляем сообщение пользователю
-      if (chatId && chatId !== 'chat_id_not_found') {
-        const userMessage = `
-🎬 Ваш запрос принят!
-
-📝 Описание события:
-${eventText}
-
-🎯 Выбранные цели:
-${selectedTags.join('\n')}
-
-⏳ Сценарий будет готов в ближайшее время!
-        `;
-
-        await fetch(`https://api.telegram.org/bot${process.env.REACT_APP_BOT_TOKEN}/sendMessage`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: userMessage,
-            parse_mode: 'HTML'
-          })
-        });
-      }
-
+      window.alert('🎬 Ваш запрос отправлен! Проверьте сообщения в Telegram.');
       setIsAnimating(false);
-      window.alert('🎬 Ваш запрос принят! Проверьте сообщения в Telegram.');
       
       // Закрываем WebApp после успешной отправки
       if (window.Telegram) {
         window.Telegram.WebApp.close();
       }
-
     } catch (error) {
       setIsAnimating(false);
-      console.error('Подробности ошибки:', error);
+      console.error('Ошибка при отправке данных:', error);
       window.alert('Произошла ошибка. Пожалуйста, попробуйте позже.');
     }
   };
@@ -297,28 +253,26 @@ ${selectedTags.join('\n')}
       
       const tg = window.Telegram.WebApp;
       
-      // Пробуем получить из user
+      // Пробуем получить данные пользователя
       const user = tg.initDataUnsafe?.user;
       if (user?.id) {
         setChatId(user.id);
         console.log('Chat ID из user:', user.id);
       } else {
-        // Временно используем тестовый chat_id для отладки
+        // Используем тестовый chat_id для отладки
         setChatId('6045806877');
         console.log('Используется тестовый Chat ID');
       }
       
-      // Пробуем получить из startParam
       const startParam = tg.initDataUnsafe?.start_param;
       if (startParam) {
         console.log('Start param:', startParam);
       }
       
-      // Если ничего не получилось, используем значение по умолчанию
       if (!chatId) {
         setChatId(tg.initDataUnsafe?.user?.id || tg.initDataUnsafe?.start_param || 'chat_id_not_found');
       }
-
+      
       console.log('WebApp data:', tg.initDataUnsafe);
     }
   }, []);
