@@ -1,0 +1,147 @@
+/* Основной контейнер */
+.container {
+  display: flex;
+  flex-direction: column;
+  background-color: #000;
+  padding: 20px;
+  min-height: 100vh;
+  color: #fff;
+}
+
+/* Обертка для контента */
+.content-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* Анимация появления для заголовка */
+.header {
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+.header.visible {
+  opacity: 1;
+}
+
+/* Анимация появления для кнопок */
+.buttons {
+  width: 100%;
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+.buttons.visible {
+  opacity: 1;
+}
+
+/* Заголовок */
+.title {
+  font-family: "Clash Grotesk", sans-serif;
+  font-style: normal;
+  font-size: 32px;
+  font-weight: 300;
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+/* Градиентный текст */
+.gradient-text {
+  background: linear-gradient(to right, #ff1cf7, #00f0ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Прогресс-бар */
+.steps-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 45px;
+}
+.step {
+  width: 40px;
+  height: 4px;
+  background-color: #444;
+  border-radius: 2px;
+  margin: 0 6px;
+}
+.step-active {
+  background-color: #fff;
+}
+
+/* Подпоясняющий текст */
+.subtitle {
+  color: #aaa;
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 15px;
+  line-height: 1.5;
+}
+
+/* Градиентная рамка для "чекбокса" */
+.gradient-border {
+  width: 100%;
+  border-radius: 30px;
+  padding: 1px;
+  margin-bottom: 12px;
+  background: linear-gradient(to right, #ff1cf7, #00f0ff);
+  opacity: 0.5;
+  transition: all 0.3s ease;
+}
+
+.gradient-border.selected {
+  opacity: 1;
+}
+
+/* Стили кнопки */
+.button {
+  width: 100%;
+  padding: 15px 0;
+  border-radius: 30px;
+  background-color: #000;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  transition: background-color 0.3s ease;
+}
+
+.button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.button.selected {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Контейнер кнопки продолжить */
+.continue-button-container {
+  margin-top: 20px;
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+
+.continue-button-container.visible {
+  opacity: 1;
+}
+
+/* Кнопка продолжить */
+.continue-button {
+  width: 100%;
+  padding: 15px 0;
+  border-radius: 30px;
+  background: linear-gradient(to right, #ff1cf7, #00f0ff);
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #000;
+  transition: transform 0.3s ease;
+}
+
+.continue-button:hover {
+  transform: translateY(-2px);
+} 
