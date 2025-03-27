@@ -1,0 +1,18 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Правила для коллекции telegram_users
+    match /telegram_users/{userId} {
+      // Для разработки: разрешаем чтение и запись всем
+      allow read, write;
+      
+      // Для production: раскомментируйте эти правила и закомментируйте строку выше
+      // allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Для всех остальных коллекций запрещаем доступ
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+} 

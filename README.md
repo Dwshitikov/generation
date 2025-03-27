@@ -1,70 +1,100 @@
-# Getting Started with Create React App
+# Генератор Сценариев - Telegram Mini App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Приложение для генерации сценариев для Reels видео, работающее в Telegram Mini App с интеграцией Firebase для отслеживания пользователей.
 
-## Available Scripts
+## Особенности
 
-In the project directory, you can run:
+- Работает в Telegram Mini App
+- Определяет новых и существующих пользователей
+- Показывает интро только новым пользователям
+- Хранит информацию о пользователях в Firebase Firestore
+- Аналитика активности пользователей
 
-### `npm start`
+## Настройка проекта
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### 1. Создайте проект в Firebase
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+1. Перейдите на сайт [Firebase Console](https://console.firebase.google.com/)
+2. Создайте новый проект
+3. Активируйте Firestore Database и Analytics
+4. В настройках проекта создайте веб-приложение
+5. Скопируйте конфигурацию Firebase
 
-### `npm test`
+### 2. Настройте Firebase в проекте
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Откройте файл `src/firebase.js` и замените конфигурацию на свою:
 
-### `npm run build`
+```js
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID",
+  measurementId: "YOUR_MEASUREMENT_ID"
+};
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 3. Создайте Telegram Mini App
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+1. Напишите боту [@BotFather](https://t.me/BotFather) в Telegram
+2. Создайте нового бота или выберите существующего
+3. Используйте команду /mybots, выберите вашего бота
+4. Перейдите в Bot Settings -> Menu Button
+5. Установите Menu Button URL для вашего веб-приложения
+6. Опционально настройте команду /start для запуска Mini App
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### 4. Настройка сборки и деплоя
 
-### `npm run eject`
+```bash
+# Установка зависимостей
+npm install
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+# Запуск для разработки
+npm start
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+# Сборка для production
+npm run build
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+# Деплой на Firebase Hosting (если требуется)
+npm install -g firebase-tools
+firebase login
+firebase init
+firebase deploy
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Структура проекта
 
-## Learn More
+- `/src` - исходный код приложения
+  - `/components` - React-компоненты
+  - `/styles` - CSS-стили
+  - `/assets` - изображения и другие ресурсы
+  - `firebase.js` - настройка Firebase
+- `/public` - статические файлы
+- `/functions` - Firebase Cloud Functions (если используются)
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Разработка
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Получение chat_id в Telegram Mini App
 
-### Code Splitting
+Приложение автоматически получает chat_id пользователя при открытии в Telegram:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```js
+const tg = window.Telegram.WebApp;
+const user = tg.initDataUnsafe?.user;
+if (user?.id) {
+  setChatId(user.id);
+}
+```
 
-### Analyzing the Bundle Size
+### Работа с Firestore
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+Приложение использует Firestore для:
+- Проверки существующих пользователей
+- Сохранения данных пользователей
+- Отслеживания активности
 
-### Making a Progressive Web App
+## Лицензия
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+MIT

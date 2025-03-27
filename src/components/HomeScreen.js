@@ -15,6 +15,8 @@ import GenderScreen from './GenderScreen';
 import AgeScreen from './AgeScreen';
 import NicheScreen from './NicheScreen';
 import FinalScreen from './FinalScreen';
+import { db } from '../firebase';
+import { doc, getDoc, setDoc, increment } from 'firebase/firestore';
 
 const TAGS = [
   { 
@@ -59,6 +61,8 @@ function HomeScreen() {
   const [showNicheSelect, setShowNicheSelect] = useState(true);
   const [niches, setNiches] = useState([]);
   const [showFinalScreen, setShowFinalScreen] = useState(true);
+  const [isNewUser, setIsNewUser] = useState(true);
+  const [isCheckingUser, setIsCheckingUser] = useState(true);
 
   const toggleTag = (tagLabel) => {
     setSelectedTags((prev) =>
@@ -82,6 +86,18 @@ function HomeScreen() {
     setIsAnimating(true);
 
     try {
+      // Логируем события пользователя в Firestore
+      if (chatId && chatId !== 'chat_id_not_found') {
+        const userRef = doc(db, 'telegram_users', chatId);
+        await setDoc(userRef, {
+          lastActivity: new Date(),
+          lastGenerationText: eventText,
+          totalGenerations: increment(1), // Используем Firebase increment для атомарного обновления счетчика
+          selectedTags: selectedTags,
+          presentationType: presentationType
+        }, { merge: true });
+      }
+
       window.alert(`🎬 Работаем над сценарием
 Представь, будто у тебя собственный продюсер 💼
 Сценарий появится в чате в течение минуты.`);
@@ -361,12 +377,15 @@ function HomeScreen() {
       window.navigator.vibrate(200);
     }
 
-    const timer = setTimeout(() => {
-      setShowIntro(false);
-    }, 5000);
+    // Автоматическое закрытие интро для новых пользователей через 5 секунд
+    if (isNewUser && showIntro) {
+      const timer = setTimeout(() => {
+        setShowIntro(false);
+      }, 5000);
 
-    return () => clearTimeout(timer);
-  }, []);
+      return () => clearTimeout(timer);
+    }
+  }, [isNewUser, showIntro]);
 
   const handleGenderSelect = (selectedGender) => {
     setGender(selectedGender);
@@ -383,11 +402,81 @@ function HomeScreen() {
     setShowNicheSelect(false);
   };
 
-  const handleFinish = () => {
+  useEffect(() => {
+    const checkUserInFirebase = async () => {
+      if (!chatId || chatId === 'chat_id_not_found') return;
+      
+      try {
+        // Проверяем, существует ли пользователь в Firestore
+        const userRef = doc(db, 'telegram_users', chatId);
+        const userDoc = await getDoc(userRef);
+        
+        if (userDoc.exists()) {
+          // Пользователь существует, не показываем интро
+          console.log('Существующий пользователь:', chatId);
+          setIsNewUser(false);
+          setShowIntro(false);
+          setShowGenderSelect(false);
+          setShowAgeSelect(false);
+          setShowNicheSelect(false);
+          setShowFinalScreen(false);
+        } else {
+          // Новый пользователь, показываем интро и сохраняем в Firestore
+          console.log('Новый пользователь:', chatId);
+          setIsNewUser(true);
+          
+          // Записываем пользователя в базу данных
+          await setDoc(userRef, {
+            chatId: chatId,
+            firstVisit: new Date(),
+            hasCompletedOnboarding: false
+          });
+        }
+      } catch (error) {
+        console.error('Ошибка при проверке пользователя:', error);
+      } finally {
+        setIsCheckingUser(false);
+      }
+    };
+    
+    if (chatId) {
+      checkUserInFirebase();
+    }
+  }, [chatId]);
+
+  const handleFinish = async () => {
     setShowFinalScreen(false);
+    
+    if (chatId && chatId !== 'chat_id_not_found') {
+      try {
+        // Обновляем статус онбординга в Firestore
+        const userRef = doc(db, 'telegram_users', chatId);
+        await setDoc(userRef, {
+          chatId: chatId,
+          hasCompletedOnboarding: true,
+          gender: gender,
+          age: age,
+          niches: niches,
+          lastVisit: new Date()
+        }, { merge: true });
+        
+        console.log('Пользователь успешно прошел онбординг');
+      } catch (error) {
+        console.error('Ошибка при обновлении пользователя:', error);
+      }
+    }
   };
 
-  if (showIntro) {
+  if (isCheckingUser) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-animation"></div>
+        <p>Загрузка...</p>
+      </div>
+    );
+  }
+
+  if (isNewUser && showIntro) {
     return (
       <div className="intro-screen">
         <video 
@@ -404,19 +493,19 @@ function HomeScreen() {
     );
   }
 
-  if (showGenderSelect) {
+  if (isNewUser && showGenderSelect) {
     return <GenderScreen onGenderSelect={handleGenderSelect} />;
   }
 
-  if (showAgeSelect) {
+  if (isNewUser && showAgeSelect) {
     return <AgeScreen onAgeSelect={handleAgeSelect} />;
   }
 
-  if (showNicheSelect) {
+  if (isNewUser && showNicheSelect) {
     return <NicheScreen onNicheSelect={handleNicheSelect} />;
   }
 
-  if (showFinalScreen) {
+  if (isNewUser && showFinalScreen) {
     return <FinalScreen onFinish={handleFinish} />;
   }
 
